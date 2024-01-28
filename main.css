@@ -1,4 +1,10 @@
-#canvas {
-  outline: 2px solid peru;
+* {
+  font-weight: bolder;
+}
 
+
+button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
