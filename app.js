@@ -5,15 +5,14 @@ let canvas = document.getElementById("canvas");
 
 let cells = new Map();
 let revealedKeys = new Set();
-let values = new Map([
-  ["0-0", 1],
-  ["0-1", 2],
-  ["1-0", 3],
-  ["1-1", null],
-]);
+let map = generateMap(["1-1"]);
 
 function toKey(row, col) {
   return row + "-" + col;
+}
+
+function fromKey(key) {
+  return key.split("-");
 }
 
 function createButtons() {
@@ -42,9 +41,9 @@ function updateButtons() {
       let cell = cells.get(key);
       if (revealedKeys.has(key)) {
         cell.disabled = true;
-        let value = values.get(key);
+        let value = map.get(key);
         cell.style.backgroundColor = "";
-        if (value === 0) {
+        if (value === undefined) {
           cell.textContent = "";
         } else if (value === 1) {
           cell.textContent = "1";
@@ -55,7 +54,7 @@ function updateButtons() {
         } else if (value === 3) {
           cell.textContent = "3";
           cell.style.color = "red";
-        } else if (value === null) {
+        } else if (value === "bomb") {
           cell.textContent = "💣";
         } else {
           throw Error("TODO");
@@ -71,6 +70,56 @@ function updateButtons() {
 function revealCell(key) {
   revealedKeys.add(key);
   updateButtons();
+}
+
+function isInBounds([row, col]) {
+  if (row < 0 || col < 0) {
+    return false;
+  } else if (row < ROWS || col < COLS) {
+    return false;
+  }
+  return true;
+}
+
+function getNeighbors(key) {
+  let [row, col] = fromKey(key);
+  let neighborRowCols = [
+    [row - 1, col - 1],
+    [row - 1, col],
+    [row - 1, col + 1],
+    [row, col - 1],
+    [row, col + 1],
+    [row + 1, col - 1],
+    [row + 1, col],
+    [row + 1, col + 1],
+  ]
+
+  return neighborRowCols
+    .filter(isInBounds)
+    .map(([r, c]) => toKey(r, c));
+}
+
+function generateMap(seedBombs) {
+  let map = new Map();
+  function incrementDanger(neighborKey) {
+    if (!map.has(neighborKey)) {
+      map.set(neighborKey, 1);
+    } else {
+      let oldVal = map.get(neighborKey);
+      if (oldVal !== "bomb") {
+        map.set(neighborKey, oldVal + 1);
+      }
+    }
+  }
+
+  for (let key of seedBombs) {
+    map.set(key, "bomb");
+    for (let neighborKey of getNeighbors(key)) {
+      incrementDanger(neighborKey);
+    }
+  }
+
+  return map;
 }
 
 createButtons();
