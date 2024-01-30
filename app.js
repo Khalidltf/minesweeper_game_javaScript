@@ -1,18 +1,18 @@
-let ROWS = 2;
-let COLS = 2;
+let ROWS = 9;
+let COLS = 9;
 let SIZE = 24;
 let canvas = document.getElementById("canvas");
 
 let cells = new Map();
 let revealedKeys = new Set();
-let map = generateMap(["1-1"]);
+let map = generateMap(["1-1", "1-2", "1-3"]);
 
 function toKey(row, col) {
   return row + "-" + col;
 }
 
 function fromKey(key) {
-  return key.split("-");
+  return key.split("-").map(Number);
 }
 
 function createButtons() {
@@ -42,7 +42,7 @@ function updateButtons() {
       if (revealedKeys.has(key)) {
         cell.disabled = true;
         let value = map.get(key);
-        cell.style.backgroundColor = "";
+        //? cell.style.backgroundColor = "";
         if (value === undefined) {
           cell.textContent = "";
         } else if (value === 1) {
@@ -75,7 +75,7 @@ function revealCell(key) {
 function isInBounds([row, col]) {
   if (row < 0 || col < 0) {
     return false;
-  } else if (row < ROWS || col < COLS) {
+  } else if (row > ROWS || col > COLS) {
     return false;
   }
   return true;
@@ -92,15 +92,14 @@ function getNeighbors(key) {
     [row + 1, col - 1],
     [row + 1, col],
     [row + 1, col + 1],
-  ]
+  ];
 
-  return neighborRowCols
-    .filter(isInBounds)
-    .map(([r, c]) => toKey(r, c));
+  return neighborRowCols.filter(isInBounds).map(([r, c]) => toKey(r, c));
 }
 
 function generateMap(seedBombs) {
   let map = new Map();
+
   function incrementDanger(neighborKey) {
     if (!map.has(neighborKey)) {
       map.set(neighborKey, 1);
