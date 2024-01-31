@@ -5,6 +5,7 @@ let canvas = document.getElementById("canvas");
 
 let cells = new Map();
 let revealedKeys = new Set();
+let flaggedKeys = new Set();
 let map = generateMap(generateBombs());
 
 function toKey(row, col) {
@@ -24,8 +25,16 @@ function createButtons() {
       cell.style.float = "left";
       cell.style.width = SIZE + "px";
       cell.style.height = SIZE + "px";
+      cell.oncontextmenu = (e) => {
+        e.preventDefault();
+        toggleFlag(key);
+        updateButtons();
+      };
       cell.onclick = () => {
-        revealCells(key);
+        if (!flaggedKeys.has(key)) {
+          propagateReveal(key, new Set());
+          updateButtons();
+        }
       };
       canvas.appendChild(cell);
       let key = toKey(i, j);
@@ -39,10 +48,15 @@ function updateButtons() {
     for (let j = 0; j < COLS; j++) {
       let key = toKey(i, j);
       let cell = cells.get(key);
+
+      cell.style.backgroundColor = "";
+      cell.style.color = "";
+      cell.textContent = "";
+      cell.disabled = false;
+
       if (revealedKeys.has(key)) {
         cell.disabled = true;
         let value = map.get(key);
-        //? cell.style.backgroundColor = "";
         if (value === undefined) {
           cell.textContent = "";
         } else if (value === 1) {
@@ -51,25 +65,27 @@ function updateButtons() {
         } else if (value === 2) {
           cell.textContent = "2";
           cell.style.color = "green";
-        } else if (value === 3) {
-          cell.textContent = "3";
+        } else if (value >= 3) {
+          cell.textContent = value;
           cell.style.color = "red";
         } else if (value === "bomb") {
           cell.textContent = "💣";
         } else {
-          throw Error("TODO");
+          throw Error("should never happen");
         }
-      } else {
-        cell.disabled = false;
-        cell.textContent = "";
+      } else if (flaggedKeys.has(key)) {
+        cell.textContent = "🚩";
       }
     }
   }
 }
 
-function revealCells(key) {
-  propagateReveal(key, new Set());
-  updateButtons();
+function toggleFlag(key) {
+  if (flaggedKeys.has(key)) {
+    flaggedKeys.delete(key);
+  } else {
+    flaggedKeys.add(key);
+  }
 }
 
 function propagateReveal(key, visited) {
