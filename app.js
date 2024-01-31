@@ -5,7 +5,7 @@ let canvas = document.getElementById("canvas");
 
 let cells = new Map();
 let revealedKeys = new Set();
-let map = generateMap(["1-1", "1-2", "1-3"]);
+let map = generateMap(generateBombs());
 
 function toKey(row, col) {
   return row + "-" + col;
@@ -96,6 +96,25 @@ function getNeighbors(key) {
 
   return neighborRowCols.filter(isInBounds).map(([r, c]) => toKey(r, c));
 }
+
+function generateBombs() {
+  let count = Math.round(Math.sqrt(COLS*ROWS))
+  let bombs = []
+
+  let allKeys = []
+  for (let i = 0; i < ROWS; i++) {
+    for (let j = 0; j < COLS; j++) {
+      allKeys.push(toKey(i, j))
+    }
+  }
+
+  allKeys.sort(()=>{
+    let coinFlip = Math.random() > 0.5
+    return coinFlip ? 1 : -1
+  })
+  return allKeys.slice(0, count)
+}
+
 
 function generateMap(seedBombs) {
   let map = new Map();
