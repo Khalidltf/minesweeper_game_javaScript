@@ -25,7 +25,7 @@ function createButtons() {
       cell.style.width = SIZE + "px";
       cell.style.height = SIZE + "px";
       cell.onclick = () => {
-        revealCell(key);
+        revealCells(key);
       };
       canvas.appendChild(cell);
       let key = toKey(i, j);
@@ -67,15 +67,29 @@ function updateButtons() {
   }
 }
 
-function revealCell(key) {
-  revealedKeys.add(key);
+function revealCells(key) {
+  propagateReveal(key, new Set());
   updateButtons();
+}
+
+function propagateReveal(key, visited) {
+  revealedKeys.add(key);
+  visited.add(key);
+  let isEmpty = !map.has(key);
+  if (isEmpty) {
+    for (let neighborKey of getNeighbors(key)) {
+      if (!visited.has(neighborKey)) {
+        propagateReveal(neighborKey, visited);
+      }
+    }
+  }
 }
 
 function isInBounds([row, col]) {
   if (row < 0 || col < 0) {
     return false;
-  } else if (row > ROWS || col > COLS) {
+  }
+  if (row >= ROWS || col >= COLS) {
     return false;
   }
   return true;
@@ -98,23 +112,22 @@ function getNeighbors(key) {
 }
 
 function generateBombs() {
-  let count = Math.round(Math.sqrt(COLS*ROWS))
-  let bombs = []
+  let count = Math.round(Math.sqrt(COLS * ROWS));
+  let bombs = []; // !missed
 
-  let allKeys = []
+  let allKeys = [];
   for (let i = 0; i < ROWS; i++) {
     for (let j = 0; j < COLS; j++) {
-      allKeys.push(toKey(i, j))
+      allKeys.push(toKey(i, j));
     }
   }
 
-  allKeys.sort(()=>{
-    let coinFlip = Math.random() > 0.5
-    return coinFlip ? 1 : -1
-  })
-  return allKeys.slice(0, count)
+  allKeys.sort(() => {
+    let coinFlip = Math.random() > 0.5;
+    return coinFlip ? 1 : -1;
+  });
+  return allKeys.slice(0, count);
 }
-
 
 function generateMap(seedBombs) {
   let map = new Map();
