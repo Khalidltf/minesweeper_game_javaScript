@@ -2,9 +2,13 @@
   font-weight: bolder;
 }
 
-
 button {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+#res {
+  margin-top: 10px;
+  display: none;
 }

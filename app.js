@@ -1,12 +1,17 @@
+/* TODO: Takehome exercise: add a way to "win" in the game, make the styling match the original one in all states, and make it reveal the wrong flags if you lose.*/
+
 let ROWS = 9;
 let COLS = 9;
 let SIZE = 24;
 let canvas = document.getElementById("canvas");
+let restartButton = document.getElementById("res");
 
-let cells = new Map();
-let revealedKeys = new Set();
-let flaggedKeys = new Set();
-let map = generateMap(generateBombs());
+let cells;
+
+let failedBombKey;
+let revealedKeys;
+let flaggedKeys;
+let map;
 
 function toKey(row, col) {
   return row + "-" + col;
@@ -26,20 +31,41 @@ function createButtons() {
       cell.style.width = SIZE + "px";
       cell.style.height = SIZE + "px";
       cell.oncontextmenu = (e) => {
+        if (failedBombKey !== null) {
+          return;
+        }
         e.preventDefault();
         toggleFlag(key);
         updateButtons();
       };
       cell.onclick = () => {
-        if (!flaggedKeys.has(key)) {
-          propagateReveal(key, new Set());
-          updateButtons();
+        if (failedBombKey !== null) {
+          return;
         }
+        if (flaggedKeys.has(key)) {
+          return;
+        }
+        revealCell(key);
+        updateButtons();
       };
       canvas.appendChild(cell);
       let key = toKey(i, j);
       cells.set(key, cell);
     }
+  }
+  restartButton.onclick = startGame;
+}
+
+function startGame() {
+  failedBombKey = null;
+  revealedKeys = new Set();
+  flaggedKeys = new Set();
+  map = generateMap(generateBombs());
+  if (cells) {
+    updateButtons();
+  } else {
+    cells = new Map();
+    createButtons();
   }
 }
 
@@ -50,15 +76,21 @@ function updateButtons() {
       let cell = cells.get(key);
 
       cell.style.backgroundColor = "";
-      cell.style.color = "";
+      cell.style.color = "black";
       cell.textContent = "";
       cell.disabled = false;
 
-      if (revealedKeys.has(key)) {
+      let value = map.get(key);
+      if (failedBombKey !== null && value === "bomb") {
         cell.disabled = true;
-        let value = map.get(key);
+        cell.textContent = "💣";
+        if (key === failedBombKey) {
+          cell.style.backgroundColor = "orange";
+        }
+      } else if (revealedKeys.has(key)) {
+        cell.disabled = true;
         if (value === undefined) {
-          cell.textContent = "";
+          // cell.textContent = "";
         } else if (value === 1) {
           cell.textContent = "1";
           cell.style.color = "blue";
@@ -68,8 +100,6 @@ function updateButtons() {
         } else if (value >= 3) {
           cell.textContent = value;
           cell.style.color = "red";
-        } else if (value === "bomb") {
-          cell.textContent = "💣";
         } else {
           throw Error("should never happen");
         }
@@ -78,6 +108,14 @@ function updateButtons() {
       }
     }
   }
+
+  if (failedBombKey !== null) {
+    canvas.style.pointerEvents = "none";
+    restartButton.style.display = "block";
+  } else {
+    canvas.style.pointerEvents = "";
+    restartButton.style.display = "";
+  }
 }
 
 function toggleFlag(key) {
@@ -85,6 +123,14 @@ function toggleFlag(key) {
     flaggedKeys.delete(key);
   } else {
     flaggedKeys.add(key);
+  }
+}
+
+function revealCell(key) {
+  if (map.get(key) === "bomb") {
+    failedBombKey = key;
+  } else {
+    propagateReveal(key, new Set());
   }
 }
 
@@ -169,4 +215,4 @@ function generateMap(seedBombs) {
   return map;
 }
 
-createButtons();
+startGame();
